@@ -13,21 +13,13 @@ function getImageUrls(url, callback) {
     var phantom = spawn(phantomjs.path, phantomArgs);
     var images = null;
     var error = null;
+    var result = '';
 
     phantom.stdout.on('data', function(data) {
-      data = "" + data;
-      if (data.indexOf('Error') == 0) {
-        error = data;
-      }
-      else {
-        try {
-          images = JSON.parse(data);
-        }
-        catch(e) {
-          console.log('Error', data)
-          error = e;
-          images = null;
-        }
+      if(data.indexOf('[debug]') == 0) {
+        console.log(`${data}`);
+      }else{
+        result += data;
       }
     });
 
@@ -36,6 +28,15 @@ function getImageUrls(url, callback) {
     });
 
     phantom.on('close', function(code) {
+      try {
+        images = JSON.parse(result);
+      }
+      catch(e) {
+        console.log('Error', result);
+        error = e;
+        images = null;
+      }
+
       if (!images && !error) {
         error = new Error('no images found');
       }
